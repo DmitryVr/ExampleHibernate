@@ -1,0 +1,216 @@
+БД
+
+CREATE TABLE test.developers (
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(50) NOT NULL,
+  specialty VARCHAR(50) NOT NULL,
+  salary INT NOT NULL,
+  PRIMARY KEY (id));
+
+
+INSERT INTO test.developers (name, specialty, salary) VALUES ('Batman', 'Java', '2000');
+INSERT INTO test.developers (name, specialty, salary) VALUES ('Jocker','C++', '3000');
+INSERT INTO test.developers (name, specialty, salary) VALUES ('Harley Queen', 'UI/UX', '2000');
+-------------------------------------------------------------------------------------------------------------
+Maven
+
+Maven - приложение для автоматизации сборки проектов (jar, war, ear)
+Artefact - любой файл в результате работы Maven (борки проекта) - jar, war, ear
+Plugins - дополнениян а все случаи жизни
+Repository - локальный, центральный
+Зависимости - могут пользоваться любые проекты, единое место хранения
+POM - xml-файл для построения проекта
+Coordinates - индентификаторы артефакта (groupId, artefactId, Version)
+Archetype - шаблон нового проекта (заготовка) (например maven web-application)
+
+Установка:
+sudo apt-get update
+sudo apt-get install maven
+mvn –version
+
+С Maven можно работать с командной строки или со среды разработки
+
+Как подключить в среду:
+1. Скачать Maven
+2. Разархивировать куда-хочешь
+3. В среде Tools->Options->Java->Maven (Maven Home: путь_к_скачанному_maven)
+
+Локальный репозиторий:
+Локальный репозиторий Maven: "maven/conf/settings"
+Пункт: localRepository>/path/to/local/repo</localRepository>
+Раскоментировать, изменить, это куда будет все скачиваться для Maven
+
+Команды Maven:
+Открыть консоль там где лежит файл pom.xml
+mvn validate - проверяет на корректность всех необходимых данных
+mvn compile - компилирует данные
+mvn test - выполняет тесты
+mvn package - создает архив в папке target (jar, war, ear)
+mvn install - закидывает архив (jar, war, ear) в локальный репозиторий
+mvn -version - информация о Maven
+mvn clean package - удаляет папку target, потом создает ее со всеми данными
+mvn clean install - то же делает с архивом
+mvn help:help
+mvn site - создает документацию
+mvn pdf:pdf - создает документацию в формате pdf
+-------------------------------------------------------------------------------------------------------------
+Hibernate
+
+Hibernate - библиотека, позволяет работать с БД
+
+В Dependencies подключить:
+<dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>6.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>4.2.1.Final</version>
+        </dependency>
+</dependencies>
+
+Подключить конфигурационный файл: resources/hibernate.cfg.xml
+
+
+
+
+/* NetBeans
+Сгенерировать ORM-классы, которые будут связывать программу с конкректной базой данных
+Для этого:
+- В "default package" файл: "Hibernate Reverse Engineering Wizard" (выбрать таблицы, т.е. связать объекты с таблицами в БД)
+- В src создать пакет entity(models)
+- В entity создать файл: "Hibernate Mapping Files and POJOs from Database"  и указать 2 файла:
+Hibernate Configuration File: hibernate.cfg.xml (общие настройки для связи с БД)
+Hibernate Reverse Engineering File: hibernate.reveng.xml (какие таблицы смэпить на проект)
+Выбрать в чем хранить настроки в xml или аннотациях (предпочтительно)
+EJB 3 Annotations
+Hibernate XML Mappings
+- В entity добавились классы и xml для связи с таблицами
+В пакет entity добавить файл HibernateUtil.java, он позволяет использовать hibernate-сессию в коде
+*/
+
+
+
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
+
+
+//public class HibernateUtil {
+//
+//    private static final SessionFactory sessionFactory = buildSessionFactory();
+//    private static ServiceRegistry serviceRegistry;
+//
+//    private static SessionFactory buildSessionFactory() {
+//
+//        Configuration configuration = new Configuration();
+//        configuration.configure();
+//        serviceRegistry = new StandardServiceRegistryBuilder()
+//                .applySettings(configuration.getProperties()).build();
+//        return configuration.buildSessionFactory(serviceRegistry);
+//    }
+//
+//    public static SessionFactory getSessionFactory() {
+//        return sessionFactory;
+//    }
+//}
+
+
+public class HibernateUtil {
+    private static SessionFactory sessionFactory = null;
+    private static ServiceRegistry serviceRegistry = null;
+
+    static {
+        try {
+                //creates the session factory from hibernate.cfg.xml
+    		Configuration configuration = new Configuration();
+    		configuration.configure();
+    		serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).getBootstrapServiceRegistry();
+    		sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+        } catch (Exception e) {
+              e.printStackTrace();
+        }
+    }
+
+    public static SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+}
+---
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+public class HibernateUtil {
+     private static final SessionFactory sessionFactory;
+
+    static {
+        try {
+            // Create the SessionFactory from hibernate.cfg.xml
+            sessionFactory = new Configuration().configure().buildSessionFactory();
+        } catch (Throwable ex) {
+            // Make sure you log the exception, as it might be swallowed
+            System.err.println("Initial SessionFactory creation failed." + ex);
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+    public static SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+}
+---
+Запросы:
+HQL
+Criteria (выборка данных, обновить и вставить нельзя)
+NativeSQL
+---
+Создать пакет db
+В нем создать DataHelper.java
+
+---
+Hibernate сессия - аналог Connection в JDBC
+Следить за закрытием сессий!
+
+Есть варианты создания сессий:
+getCurrentSession() - если есть открытая сессия, данный метод будет возвращать текущую сессию (при закрытии транзакции сессия закрыватся, т.е. не надо вызывать close())
+openSession() - всегда открывает новую сессию, вне зависимости есть ли сессия или нет, закрывать вручную методом close()
+25 минут
+
+package db;
+
+import entity.Developers;
+import entity.HibernateUtil;
+import java.util.List;
+import org.hibernate.SessionFactory;
+import org.hibernate.Session;
+
+
+
+public class DataHelper {
+
+    private SessionFactory sessionFactory = null;
+    //private static DataHelper dataHelper;
+
+    private DataHelper() {
+        sessionFactory = HibernateUtil.getSessionFactory();
+    }
+
+    private Session getSession() {
+        // если сессия уже есть, метод возвращает текущую сессию, иначе создает сессию
+        // при закрытии транзакции сессия сама закрывается
+        return sessionFactory.getCurrentSession(); // получить текущую сессию
+
+        // openSession всегда открывает новую сессию, независимости есть уже сессия или нет
+        // закрывать сессию нужно вручную (sessionFactory.openSession().close(); и flush() - для обновления)
+        //return sessionFactory.openSession();
+
+    }
+
+    public List<Developers> getAllDevelopers() {
+        return getSession().createCriteria(Developers.class).list();
+    }
+
+}
